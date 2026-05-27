@@ -1,0 +1,20 @@
+# .gitignore - project defaults
+# Python virtual envs
+venv/
+.venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+
+# Environment files
+.env
+
+# macOS
+.DS_Store
