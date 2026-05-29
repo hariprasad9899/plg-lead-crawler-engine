@@ -14,6 +14,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.infrastructure.database.base import Base
+from typing import Optional
 
 
 class QueryStatusEnum(str, Enum):
@@ -26,7 +27,6 @@ class QueryStatusEnum(str, Enum):
 # =========================================================
 # SEARCH QUERIES
 # =========================================================
-
 
 class SearchQuery(Base):
     __tablename__ = "search_queries"
@@ -45,7 +45,7 @@ class SearchQuery(Base):
         nullable=False,
     )
     query: Mapped[str] = mapped_column(Text, nullable=False)
-    source: Mapped[str | None] = mapped_column(String(50))
+    source: Mapped[Optional[str]] = mapped_column(String(50)) 
     priority: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

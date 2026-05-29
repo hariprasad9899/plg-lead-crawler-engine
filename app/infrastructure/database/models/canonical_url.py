@@ -14,6 +14,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.infrastructure.database.base import Base
+from typing import Optional
 
 
 class CrawlStatusEnum(str, Enum):
@@ -51,8 +52,8 @@ class CanonicalUrl(Base):
         Text,
         nullable=False,
     )
-    title: Mapped[str | None] = mapped_column(Text)
-    content_hash: Mapped[str | None] = mapped_column(Text)
+    title: Mapped[Optional[str]] = mapped_column(Text)
+    content_hash: Mapped[Optional[str]] = mapped_column(Text)
     global_crawl_status: Mapped[CrawlStatusEnum] = mapped_column(
         SqlEnum(
             CrawlStatusEnum,
@@ -66,7 +67,7 @@ class CanonicalUrl(Base):
         DateTime(timezone=True),
         server_default=func.now(),
     )
-    last_crawled_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
+    last_crawled_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True))
     discovered_urls = relationship(
         "DiscoveredUrl",
         back_populates="canonical_url",

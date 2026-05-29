@@ -14,6 +14,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.infrastructure.database.base import Base
+from typing import Optional
 
 
 class JobStatusEnum(str, Enum):
@@ -55,20 +56,20 @@ class IntentJob(Base):
         nullable=False,
         default=JobStatusEnum.PENDING,
     )
-    product_name: Mapped[str | None] = mapped_column(Text)
-    product_description: Mapped[str | None] = mapped_column(Text)
-    target_industries: Mapped[dict | None] = mapped_column(JSONB)
-    target_countries: Mapped[dict | None] = mapped_column(JSONB)
-    target_regions: Mapped[dict | None] = mapped_column(JSONB)
-    min_company_size: Mapped[int | None] = mapped_column(Integer)
-    max_company_size: Mapped[int | None] = mapped_column(Integer)
-    target_personas: Mapped[dict | None] = mapped_column(JSONB)
-    target_technologies: Mapped[dict | None] = mapped_column(JSONB)
-    excluded_technologies: Mapped[dict | None] = mapped_column(JSONB)
-    excluded_domains: Mapped[dict | None] = mapped_column(JSONB)
-    buying_signals: Mapped[dict | None] = mapped_column(JSONB)
-    negative_signals: Mapped[dict | None] = mapped_column(JSONB)
-    signal_priority_weights: Mapped[dict | None] = mapped_column(JSONB)
+    product_name: Mapped[Optional[str]] = mapped_column(Text)
+    product_description: Mapped[Optional[str]] = mapped_column(Text)
+    target_industries: Mapped[Optional[dict]] = mapped_column(JSONB)
+    target_countries: Mapped[Optional[dict]] = mapped_column(JSONB)
+    target_regions: Mapped[Optional[dict]] = mapped_column(JSONB)
+    min_company_size: Mapped[Optional[int]] = mapped_column(Integer)
+    max_company_size: Mapped[Optional[int]] = mapped_column(Integer)
+    target_personas: Mapped[Optional[dict]] = mapped_column(JSONB)
+    target_technologies: Mapped[Optional[dict]] = mapped_column(JSONB)
+    excluded_technologies: Mapped[Optional[dict]] = mapped_column(JSONB)
+    excluded_domains: Mapped[Optional[dict]] = mapped_column(JSONB)
+    buying_signals: Mapped[Optional[dict]] = mapped_column(JSONB)
+    negative_signals: Mapped[Optional[dict]] = mapped_column(JSONB)
+    signal_priority_weights: Mapped[Optional[dict]] = mapped_column(JSONB)
     schedule_type: Mapped[str] = mapped_column(
         String(20), nullable=False, default="cron"
     )
@@ -105,8 +106,8 @@ class IntentJob(Base):
         nullable=False,
         default=0,
     )
-    last_run_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
-    next_run_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
+    last_run_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True))
+    next_run_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

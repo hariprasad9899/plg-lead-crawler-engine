@@ -14,6 +14,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.infrastructure.database.base import Base
+from typing import Optional
 
 
 class CrawlStatusEnum(str, Enum):
@@ -52,7 +53,7 @@ class DiscoveredUrl(Base):
         ForeignKey("search_queries.id", ondelete="CASCADE"),
         nullable=False,
     )
-    source_engine: Mapped[str | None] = mapped_column(String(50))
+    source_engine: Mapped[Optional[str]] = mapped_column(String(50))
     priority_score: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
