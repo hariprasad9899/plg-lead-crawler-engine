@@ -67,7 +67,8 @@ CREATE TABLE intent_jobs (
     negative_signals JSONB,
     signal_priority_weights JSONB,
     -- Monitoring configuration
-    monitoring_frequency_hours INTEGER DEFAULT 6,
+    schedule_type VARCHAR(20) DEFAULT 'cron',
+    schedule_expression TEXT DEFAULT '0 */6 * * *'
     lead_score_threshold INTEGER DEFAULT 70,
     max_urls_per_run INTEGER DEFAULT 50,
     -- Runtime metrics
