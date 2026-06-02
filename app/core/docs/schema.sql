@@ -5,16 +5,21 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- =========================================================
 
 CREATE TYPE job_status AS ENUM (
-    'pending',
-    'running',
+    'active',
     'paused',
-    'completed',
-    'failed'
+    'archived'
 );
 
 CREATE TYPE query_status AS ENUM (
     'pending',
     'processing',
+    'completed',
+    'failed'
+);
+
+CREATE TYPE run_status AS ENUM (
+    'pending',
+    'running',
     'completed',
     'failed'
 );
@@ -43,40 +48,15 @@ CREATE TYPE crawl_provider AS ENUM (
 -- =========================================================
 
 CREATE TABLE intent_jobs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID,
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    tenant_id UUID NOT NULL,
     created_by UUID,
     request_name TEXT NOT NULL,
     original_query TEXT NOT NULL,
-    status job_status NOT NULL DEFAULT 'pending',
-    -- Product customer is selling
-    product_name TEXT,
-    product_description TEXT,
-    -- ICP (Ideal Customer Profile)
-    target_industries JSONB,
-    target_countries JSONB,
-    target_regions JSONB,
-    min_company_size INTEGER,
-    max_company_size INTEGER,
-    target_personas JSONB,
-    target_technologies JSONB,
-    excluded_technologies JSONB,
-    excluded_domains JSONB,
-    -- Buying signal configuration
-    buying_signals JSONB,
-    negative_signals JSONB,
-    signal_priority_weights JSONB,
-    -- Monitoring configuration
+    status job_status NOT NULL DEFAULT 'active',
+    current_config_version_id UUID,
     schedule_type VARCHAR(20) DEFAULT 'cron',
-    schedule_expression TEXT DEFAULT '0 */6 * * *'
-    lead_score_threshold INTEGER DEFAULT 70,
-    max_urls_per_run INTEGER DEFAULT 50,
-    -- Runtime metrics
-    total_seed_urls INTEGER DEFAULT 0,
-    total_discovered_urls INTEGER DEFAULT 0,
-    total_processed_urls INTEGER DEFAULT 0,
-    total_qualified_leads INTEGER DEFAULT 0,
-    last_run_at TIMESTAMPTZ,
+    schedule_expression TEXT DEFAULT '0 */6 * * *',
     next_run_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -86,28 +66,93 @@ CREATE INDEX idx_intent_jobs_status ON intent_jobs(status);
 CREATE INDEX idx_intent_jobs_next_run ON intent_jobs(next_run_at);
 CREATE INDEX idx_intent_jobs_tenant ON intent_jobs(tenant_id);
 
+
+-- =========================================================
+-- JOB CONFIG VERSIONS
+-- =========================================================
+
+CREATE TABLE job_config_versions (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    tenant_id UUID NOT NULL,
+    intent_job_id UUID NOT NULL REFERENCES intent_jobs(id),
+    version_number INTEGER NOT NULL,
+    config JSONB NOT NULL,
+    --- config items
+        -- product_name TEXT,
+        -- product_description TEXT,
+        -- target_industries JSONB,
+        -- target_countries JSONB,
+        -- target_regions JSONB,
+        -- min_company_size INTEGER,
+        -- max_company_size INTEGER,
+        -- target_personas JSONB,
+        -- target_technologies JSONB,
+        -- excluded_technologies JSONB,
+        -- excluded_domains JSONB,
+        -- buying_signals JSONB,
+        -- negative_signals JSONB,
+        -- signal_priority_weights JSONB,
+    --- 
+    lead_score_threshold INTEGER DEFAULT 70,
+    max_urls_per_run INTEGER DEFAULT 50,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(intent_job_id, version_number)
+);
+
+CREATE INDEX idx_job_config_versions_tenant ON job_config_versions(tenant_id);
+
+
+ALTER TABLE intent_jobs
+ADD CONSTRAINT fk_current_config_version
+FOREIGN KEY (current_config_version_id)
+REFERENCES job_config_versions(id);
+
+-- =========================================================
+-- JOB RUNS
+-- =========================================================
+
+CREATE TABLE job_runs (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    tenant_id UUID NOT NULL,
+    intent_job_id UUID NOT NULL REFERENCES intent_jobs(id),
+    job_config_version_id UUID REFERENCES job_config_versions(id),
+    status run_status NOT NULL DEFAULT 'pending',
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    seed_urls_count INTEGER DEFAULT 0,
+    discovered_urls_count INTEGER DEFAULT 0,
+    processed_urls_count INTEGER DEFAULT 0,
+    qualified_leads_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_job_runs_tenant ON job_runs(tenant_id);
+CREATE INDEX idx_job_runs_job ON job_runs(intent_job_id);
+CREATE INDEX idx_job_runs_config ON job_runs(job_config_version_id);
+
 -- =========================================================
 -- GENERATED INTENTS
 -- =========================================================
 
 CREATE TABLE generated_intents (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID,
-    intent_job_id UUID NOT NULL REFERENCES intent_jobs(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    tenant_id UUID NOT NULL,
+    job_run_id UUID NOT NULL REFERENCES job_runs(id),
     intent_text TEXT NOT NULL,
     priority INTEGER DEFAULT 50,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_generated_intents_job ON generated_intents(intent_job_id);
+CREATE INDEX idx_generated_intents_run ON generated_intents(job_run_id);
+CREATE INDEX idx_generated_intents_tenant ON generated_intents(tenant_id);
 
 -- =========================================================
 -- SEARCH QUERIES
 -- =========================================================
 
 CREATE TABLE search_queries (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID,
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    tenant_id UUID NOT NULL,
     generated_intent_id UUID NOT NULL REFERENCES generated_intents(id) ON DELETE CASCADE,
     query TEXT NOT NULL,
     source VARCHAR(50),
@@ -116,14 +161,16 @@ CREATE TABLE search_queries (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_search_queries_status ON search_queries(status);
+CREATE INDEX idx_search_queries_tenant ON search_queries(tenant_id);
+CREATE INDEX idx_search_queries_intent ON search_queries(generated_intent_id);
+CREATE INDEX idx_search_queries_tenant_status ON search_queries(tenant_id, status);
 
 -- =========================================================
 -- GLOBAL URL REGISTRY
 -- =========================================================
 
 CREATE TABLE canonical_urls (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     normalized_url TEXT NOT NULL UNIQUE,
     url TEXT NOT NULL,
     domain TEXT NOT NULL,
@@ -142,8 +189,8 @@ CREATE INDEX idx_canonical_crawl_status ON canonical_urls(global_crawl_status);
 -- =========================================================
 
 CREATE TABLE discovered_urls (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID,
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    tenant_id UUID NOT NULL,
     canonical_url_id UUID NOT NULL REFERENCES canonical_urls(id) ON DELETE CASCADE,
     search_query_id UUID NOT NULL REFERENCES search_queries(id) ON DELETE CASCADE,
     source_engine VARCHAR(50),
@@ -162,7 +209,7 @@ CREATE INDEX idx_discovered_crawl_status ON discovered_urls(crawl_status);
 -- =========================================================
 
 CREATE TABLE crawled_pages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     canonical_url_id UUID NOT NULL REFERENCES canonical_urls(id) ON DELETE CASCADE,
     crawl_provider crawl_provider,
     raw_html TEXT,
