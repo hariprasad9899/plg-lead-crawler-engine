@@ -214,7 +214,7 @@ CREATE TABLE crawled_pages (
     crawl_provider crawl_provider,
     raw_html TEXT,
     extracted_text TEXT,
-    metadata JSONB,
+    crawl_metadata JSONB,
     content_hash TEXT,
     response_status_code INTEGER,
     crawl_duration_ms INTEGER,
