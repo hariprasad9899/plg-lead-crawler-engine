@@ -10,9 +10,17 @@ from app.core.exceptions.handler import (
     integrity_exception_handler,
     generic_exeption_handler,
 )
-import app.infrastructure.database.models
+from app.infrastructure.database.sessions.session import engine
+from app.infrastructure.database.base import Base
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="auth-service")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
+
+app = FastAPI(title="auth-service",lifespan=lifespan)
 
 origins = [
     "http://localhost",
