@@ -10,4 +10,4 @@ settings = Settings()
 
 @router.post("/intent-jobs",response_model=CreateIntentJobsResponse)
 def create_intent_jobs(req_data:CreateIntentJobsRequest, service: IntentService = Depends(get_intent_service)):
-    return service.create_intent(intent_data=req_data)
+    return service.create_intent(data=req_data)

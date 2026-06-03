@@ -1,0 +1,2 @@
+class APP_CONSTANTS:
+    DEFAULT_SCHEDULE_EXP = "0 */6 * * *"

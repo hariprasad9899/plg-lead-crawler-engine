@@ -169,3 +169,9 @@ GOOGLE_EMAIL_NOT_VERIFIED = ErrorDefinition(
     message="Google email not verified",
     status_code=400,
 )
+
+INVALID_SCHEDULE_EXPRESSION = ErrorDefinition(
+    code="INVALID_SCHEDULE_EXPRESSION",
+    message="Invalid Schedule Expression",
+    status_code=400
+)

@@ -1,6 +1,5 @@
 from enum import Enum
 import uuid
-
 from sqlalchemy import (
     DateTime,
     Enum as SqlEnum,
@@ -13,7 +12,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-
 from app.infrastructure.database.base import Base
 
 
@@ -25,8 +23,6 @@ class JobStatusEnum(str, Enum):
 
 class IntentJob(Base):
     __tablename__ = "intent_jobs"
-
-
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -57,6 +53,7 @@ class IntentJob(Base):
         nullable=False,
         default=JobStatusEnum.ACTIVE,
     )
+    
     current_config_version_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("job_config_versions.id"),
