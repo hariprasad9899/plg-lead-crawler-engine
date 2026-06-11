@@ -1,14 +1,17 @@
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 
 def success_response(data=None, status_code=200, cookies: list[dict] = None):
     response = JSONResponse(
         status_code=status_code,
-        content={
-            "success": True,
-            "data": data,
-            "error": None,
-        },
+        content=jsonable_encoder(
+            {
+                "success": True,
+                "data": data,
+                "error": None,
+            }
+        ),
     )
 
     if cookies:
@@ -29,15 +32,17 @@ def error_response(
 
     response = JSONResponse(
         status_code=status_code,
-        content={
-            "success": False,
-            "data": None,
-            "error": {
-                "code": code,
-                "message": message,
-                "details": details,
-            },
-        },
+        content=jsonable_encoder(
+            {
+                "success": False,
+                "data": None,
+                "error": {
+                    "code": code,
+                    "message": message,
+                    "details": details,
+                },
+            }
+        ),
     )
 
     if cookies:

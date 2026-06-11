@@ -89,7 +89,7 @@ class JobRun(Base):
         back_populates="job_runs",
     )
     job_config_version = relationship(
-        "JobConfigVersion",
+        "JobConfigVersionModel",
         back_populates="job_runs",
     )
     generated_intents = relationship(

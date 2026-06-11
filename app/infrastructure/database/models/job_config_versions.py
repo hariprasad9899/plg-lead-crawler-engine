@@ -16,7 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
 
-class JobConfigVersion(Base):
+class JobConfigVersionModel(Base):
     __tablename__ = "job_config_versions"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -56,7 +56,7 @@ class JobConfigVersion(Base):
     )
 
     job_config = relationship(
-        "JobConfig",
+        "JobConfigModel",
         back_populates="versions",
         foreign_keys=[job_config_id],
     )

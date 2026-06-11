@@ -90,7 +90,7 @@ class IntentJob(Base):
         cascade="all, delete-orphan",
     )
     selected_config_version = relationship(
-        "JobConfigVersion",
+        "JobConfigVersionModel",
         foreign_keys=[selected_config_version_id],
     )
     __table_args__ = (

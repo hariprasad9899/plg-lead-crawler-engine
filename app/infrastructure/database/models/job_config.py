@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.database.base import Base
 
 
-class JobConfig(Base):
+class JobConfigModel(Base):
     __tablename__ = "job_configs"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -69,15 +69,15 @@ class JobConfig(Base):
     )
 
     versions = relationship(
-        "JobConfigVersion",
+        "JobConfigVersionModel",
         back_populates="job_config",
         cascade="all, delete-orphan",
-        order_by="JobConfigVersion.version_number",
-        foreign_keys="JobConfigVersion.job_config_id",
+        order_by="JobConfigVersionModel.version_number",
+        foreign_keys="JobConfigVersionModel.job_config_id",
     )
 
     current_version = relationship(
-        "JobConfigVersion",
+        "JobConfigVersionModel",
         foreign_keys=[current_version_id],
         post_update=True,
     )

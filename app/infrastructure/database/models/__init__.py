@@ -1,7 +1,7 @@
 from .intent_job import IntentJob
 from .job_runs import JobRun
-from .job_config import JobConfig
-from .job_config_versions import JobConfigVersion
+from .job_config import JobConfigModel
+from .job_config_versions import JobConfigVersionModel
 from .generated_intent import GeneratedIntent
 from .search_query import SearchQuery
 from .discovered_url import DiscoveredUrl
@@ -18,8 +18,8 @@ __all__ = [
     "CanonicalUrl",
     "DiscoveredUrl",
     "CrawledPage",
-    "JobConfig",
-    "JobConfigVersion",
+    "JobConfigModel",
+    "JobConfigVersionModel",
     "JobRun",
     "Lead",
     "LeadContact",

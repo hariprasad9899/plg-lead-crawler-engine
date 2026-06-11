@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, Request, Response
-from app.core.utils.response import success_response
+from fastapi import APIRouter, Depends
 from app.core.utils.env_config import Settings
 from app.core.schemas.job_config_schemas import (
     CreateJobConfigRequest,
@@ -8,11 +7,11 @@ from app.core.schemas.job_config_schemas import (
 from app.core.services.job_config_services import JobConfigService
 from app.core.dependencies.job_config_dependencies import get_job_config_service
 
-router = APIRouter(prefix="/intents", tags=["Intents"])
+router = APIRouter(prefix="/job-config", tags=["JobConfig"])
 settings = Settings()
 
 
-@router.post("/job-config", response_model=CreateJobConfigResponse)
+@router.post("", response_model=CreateJobConfigResponse)
 def create_job_config(
     req_data: CreateJobConfigRequest,
     service: JobConfigService = Depends(get_job_config_service),
