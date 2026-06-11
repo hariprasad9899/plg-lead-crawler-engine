@@ -31,7 +31,7 @@ class GeneratedIntent(Base):
 
     job_run_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("job_runs.id"),
+        ForeignKey("job_runs.id", ondelete="CASCADE"),
         nullable=False,
     )
 

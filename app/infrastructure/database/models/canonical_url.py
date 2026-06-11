@@ -1,10 +1,8 @@
 from datetime import datetime
-from enum import Enum
 import uuid
 
 from sqlalchemy import (
     DateTime,
-    Enum as SqlEnum,
     Index,
     Text,
     text,
@@ -13,13 +11,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
-
-
-class CrawlStatusEnum(str, Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
+from app.infrastructure.database.models.enums import (
+    CrawlStatusEnum,
+    crawl_status_type,
+)
 
 
 class CanonicalUrl(Base):
@@ -56,11 +51,7 @@ class CanonicalUrl(Base):
     )
 
     global_crawl_status: Mapped[CrawlStatusEnum] = mapped_column(
-        SqlEnum(
-            CrawlStatusEnum,
-            name="crawl_status",
-            values_callable=lambda obj: [e.value for e in obj],
-        ),
+        crawl_status_type,
         nullable=False,
         default=CrawlStatusEnum.PENDING,
     )
@@ -91,8 +82,13 @@ class CanonicalUrl(Base):
             "idx_canonical_domain",
             "domain",
         ),
+        # Partial index for the global crawl worker dequeue:
+        # WHERE global_crawl_status = 'pending'. A plain index on a
+        # low-cardinality status column is near-useless; the partial index
+        # stays tiny and targets exactly the rows workers poll for.
         Index(
-            "idx_canonical_crawl_status",
-            "global_crawl_status",
+            "idx_canonical_pending",
+            "first_seen_at",
+            postgresql_where=text("global_crawl_status = 'pending'"),
         ),
     )

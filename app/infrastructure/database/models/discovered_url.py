@@ -1,27 +1,23 @@
 from datetime import datetime
-from enum import Enum
 import uuid
 
 from sqlalchemy import (
     DateTime,
-    Enum as SqlEnum,
     ForeignKey,
     Index,
     Integer,
     String,
+    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base
-
-
-class CrawlStatusEnum(str, Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
+from app.infrastructure.database.models.enums import (
+    CrawlStatusEnum,
+    crawl_status_type,
+)
 
 
 class DiscoveredUrl(Base):
@@ -67,11 +63,7 @@ class DiscoveredUrl(Base):
     )
 
     crawl_status: Mapped[CrawlStatusEnum] = mapped_column(
-        SqlEnum(
-            CrawlStatusEnum,
-            name="crawl_status",
-            values_callable=lambda obj: [e.value for e in obj],
-        ),
+        crawl_status_type,
         nullable=False,
         default=CrawlStatusEnum.PENDING,
     )
@@ -93,6 +85,14 @@ class DiscoveredUrl(Base):
     )
 
     __table_args__ = (
+        # A tenant discovering the same canonical URL via the same query is a
+        # duplicate, not new information. Enforce the dedup grain at the DB.
+        UniqueConstraint(
+            "tenant_id",
+            "canonical_url_id",
+            "search_query_id",
+            name="uq_discovered_tenant_canonical_query",
+        ),
         Index(
             "idx_discovered_tenant",
             "tenant_id",
@@ -101,8 +101,12 @@ class DiscoveredUrl(Base):
             "idx_discovered_canonical",
             "canonical_url_id",
         ),
+        # Partial index for the per-tenant crawl worker dequeue:
+        # WHERE crawl_status = 'pending', ordered by priority.
         Index(
-            "idx_discovered_crawl_status",
-            "crawl_status",
+            "idx_discovered_pending",
+            "tenant_id",
+            "priority_score",
+            postgresql_where=text("crawl_status = 'pending'"),
         ),
     )

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 
-class CreateIntentJobsRequest(BaseModel):
+class CreateJobConfigRequest(BaseModel):
     tenant_id: UUID
     created_by: UUID
     request_name: str
@@ -13,7 +13,7 @@ class CreateIntentJobsRequest(BaseModel):
     schedule_expression: str = "0 */6 * * *"
 
 
-class CreateIntentJobsResponse(BaseModel):
+class CreateJobConfigResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     tenant_id: UUID
@@ -22,13 +22,3 @@ class CreateIntentJobsResponse(BaseModel):
     schedule_expression: str
     created_at: datetime
     created_by: UUID
-
-
-@dataclass
-class IntentJobCreate:
-    tenant_id: UUID
-    created_by: UUID
-    request_name: str
-    original_query: str
-    schedule_expression: str = "0 */6 * * *"
-    next_run_at: datetime | None = None

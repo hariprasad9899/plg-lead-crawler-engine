@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 import uuid
 from sqlalchemy import (
@@ -54,10 +55,10 @@ class IntentJob(Base):
         default=JobStatusEnum.ACTIVE,
     )
     
-    current_config_version_id: Mapped[uuid.UUID | None] = mapped_column(
+    selected_config_version_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("job_config_versions.id"),
-        nullable=True,
+        nullable=False,
     )
     schedule_type: Mapped[str] = mapped_column(
         String(20),
@@ -69,39 +70,40 @@ class IntentJob(Base):
         nullable=False,
         default="0 */6 * * *",
     )
-    next_run_at: Mapped[DateTime | None] = mapped_column(
+    next_run_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
     )
-    created_at: Mapped[DateTime] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-    updated_at: Mapped[DateTime] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
-    )
-    config_versions = relationship(
-        "JobConfigVersion",
-        back_populates="intent_job",
-        cascade="all, delete-orphan",
-        order_by="JobConfigVersion.version_number",
-        foreign_keys="JobConfigVersion.intent_job_id",
     )
     job_runs = relationship(
         "JobRun",
         back_populates="intent_job",
         cascade="all, delete-orphan",
     )
-    current_config = relationship(
+    selected_config_version = relationship(
         "JobConfigVersion",
-        foreign_keys=[current_config_version_id],
+        foreign_keys=[selected_config_version_id],
     )
     __table_args__ = (
         Index("idx_intent_jobs_status", "status"),
-        Index("idx_intent_jobs_next_run", "next_run_at"),
+        # Scheduler dequeue: WHERE status = 'active' AND next_run_at <= now().
+        # Partial composite index keeps only due/active jobs.
+        Index(
+            "idx_intent_jobs_due",
+            "next_run_at",
+            postgresql_where=text("status = 'active'"),
+        ),
         Index("idx_intent_jobs_tenant", "tenant_id"),
         Index("idx_intent_jobs_created_by", "created_by"),
+        # Supports "which jobs use config version X" lookups.
+        Index("idx_intent_jobs_config_version", "selected_config_version_id"),
     )

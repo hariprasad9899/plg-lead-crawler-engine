@@ -92,9 +92,9 @@ CREATE TABLE job_config_versions (
         -- buying_signals JSONB,
         -- negative_signals JSONB,
         -- signal_priority_weights JSONB,
+        -- lead_score_threshold JSONB,
+        -- max_urls_per_run JSONB
     --- 
-    lead_score_threshold INTEGER DEFAULT 70,
-    max_urls_per_run INTEGER DEFAULT 50,
     created_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(intent_job_id, version_number)
 );

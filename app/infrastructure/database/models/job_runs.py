@@ -36,7 +36,7 @@ class JobRun(Base):
     )
     intent_job_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("intent_jobs.id"),
+        ForeignKey("intent_jobs.id", ondelete="CASCADE"),
         nullable=False,
     )
     job_config_version_id: Mapped[uuid.UUID] = mapped_column(
@@ -94,6 +94,11 @@ class JobRun(Base):
     )
     generated_intents = relationship(
         "GeneratedIntent",
+        back_populates="job_run",
+        cascade="all, delete-orphan",
+    )
+    crawled_leads = relationship(
+        "CrawledLead",
         back_populates="job_run",
         cascade="all, delete-orphan",
     )

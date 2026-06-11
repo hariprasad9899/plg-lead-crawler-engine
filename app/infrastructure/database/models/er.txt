@@ -1,0 +1,154 @@
+erDiagram
+    %% ---------- Configuration & versioning ----------
+    job_configs ||--o{ job_config_versions : "has versions (1:N)"
+    job_configs |o--o| job_config_versions : "current_version (pointer)"
+
+    %% ---------- Jobs & runs ----------
+    job_config_versions ||--o{ intent_jobs : "selected by (reusable)"
+    job_config_versions ||--o{ job_runs : "executed as"
+    intent_jobs         ||--o{ job_runs : "runs many times"
+
+    %% ---------- Lead generation pipeline ----------
+    job_runs           ||--o{ generated_intents : "produces"
+    generated_intents  ||--o{ search_queries : "expands to"
+    search_queries     ||--o{ discovered_urls : "discovers"
+    canonical_urls     ||--o{ discovered_urls : "deduped to (global)"
+    canonical_urls     ||--o{ crawled_pages : "crawled into"
+
+    %% ---------- Leads (master + observation) ----------
+    job_runs           ||--o{ crawled_leads : "produces observations"
+    leads              ||--o{ crawled_leads : "rolls up from (history)"
+    leads              ||--o{ lead_contacts : "has people (deduped)"
+    canonical_urls     |o--o{ leads : "primary url"
+    canonical_urls     ||--o{ crawled_leads : "observed at"
+    crawled_pages      |o--o{ crawled_leads : "extracted from"
+
+    job_configs {
+        uuid id PK
+        uuid tenant_id
+        uuid created_by
+        text name
+        uuid current_version_id FK "use_alter"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    job_config_versions {
+        uuid id PK
+        uuid tenant_id
+        uuid job_config_id FK "CASCADE"
+        int version_number "UK(job_config_id, version_number)"
+        jsonb config "immutable"
+        timestamptz created_at
+    }
+    intent_jobs {
+        uuid id PK
+        uuid tenant_id
+        text request_name
+        enum status "active|paused|archived"
+        uuid selected_config_version_id FK "NOT NULL"
+        text schedule_expression "cron"
+        timestamptz next_run_at
+        timestamptz created_at
+    }
+    job_runs {
+        uuid id PK
+        uuid tenant_id
+        uuid intent_job_id FK "CASCADE"
+        uuid job_config_version_id FK "provenance"
+        enum status "pending|running|completed|failed"
+        int qualified_leads_count
+        timestamptz started_at
+        timestamptz created_at
+    }
+    generated_intents {
+        uuid id PK
+        uuid tenant_id
+        uuid job_run_id FK "CASCADE"
+        text intent_text
+        int priority
+        timestamptz created_at
+    }
+    search_queries {
+        uuid id PK
+        uuid tenant_id
+        uuid generated_intent_id FK "CASCADE"
+        text query
+        enum status "pending|running|completed|failed"
+        timestamptz created_at
+    }
+    discovered_urls {
+        uuid id PK
+        uuid tenant_id
+        uuid canonical_url_id FK "CASCADE"
+        uuid search_query_id FK "CASCADE"
+        int priority_score
+        enum crawl_status "pending|processing|completed|failed"
+        timestamptz discovered_at
+    }
+    canonical_urls {
+        uuid id PK
+        text normalized_url UK "global dedup key"
+        text url
+        text domain
+        text content_hash
+        enum global_crawl_status
+        timestamptz first_seen_at
+        timestamptz last_crawled_at
+    }
+    crawled_pages {
+        uuid id PK
+        uuid canonical_url_id FK "CASCADE"
+        enum crawl_provider
+        text raw_html
+        text extracted_text
+        text content_hash
+        timestamptz crawled_at
+    }
+    leads {
+        uuid id PK
+        uuid tenant_id
+        text fingerprint "UNIQUE(tenant_id, fingerprint)"
+        uuid canonical_url_id FK "primary url (SET NULL)"
+        enum lead_type "company|person"
+        text company_name
+        text company_domain
+        int  employee_count
+        enum status "new|qualified|disqualified|exported|..."
+        int  qualification_score
+        jsonb firmographics "expandable"
+        jsonb signals "expandable (GIN)"
+        jsonb custom_fields "tenant-defined (GIN)"
+        enum enrichment_status
+        bool synced_to_crm
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+        int  times_seen
+        timestamptz updated_at
+    }
+    crawled_leads {
+        uuid id PK
+        uuid tenant_id
+        uuid lead_id FK "-> leads (master)"
+        uuid job_run_id FK "-> job_runs"
+        uuid canonical_url_id FK
+        uuid crawled_page_id FK "nullable"
+        enum source "crawl|enrichment|manual|import"
+        text company_name "snapshot this run"
+        int  employee_count "snapshot this run"
+        float confidence_score
+        jsonb raw_extraction "full snapshot (immutable)"
+        timestamptz created_at
+    }
+    lead_contacts {
+        uuid id PK
+        uuid tenant_id
+        uuid lead_id FK "-> leads (master)"
+        text full_name
+        text title
+        text email "UK(lead_id,email) partial"
+        enum email_status
+        bool is_primary
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+        timestamptz created_at
+    }
