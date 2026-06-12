@@ -175,3 +175,21 @@ INVALID_SCHEDULE_EXPRESSION = ErrorDefinition(
     message="Invalid Schedule Expression",
     status_code=400
 )
+
+JOB_CONFIG_NOT_FOUND = ErrorDefinition(
+    code="JOB_CONFIG_NOT_FOUND",
+    message="Job config not found.",
+    status_code=404,
+)
+
+FIELD_CANNOT_BE_BLANK = ErrorDefinition(
+    code="FIELD_CANNOT_BE_BLANK",
+    message="Field cannot be empty or whitespace.",
+    status_code=400,
+)
+
+JOB_CONFIG_UPDATE_FIELDS_REQUIRED = ErrorDefinition(
+    code="JOB_CONFIG_UPDATE_FIELDS_REQUIRED",
+    message="At least one of 'name' or 'description' must be provided.",
+    status_code=400,
+)

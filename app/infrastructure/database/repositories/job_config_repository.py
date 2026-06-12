@@ -1,3 +1,4 @@
+from uuid import UUID
 from sqlalchemy.orm import Session as SQLAlchemySession
 from pydantic import EmailStr
 from app.infrastructure.database.models.job_config import JobConfigModel
@@ -8,6 +9,33 @@ from app.core.schemas.job_config_schemas import JobConfig
 class JobConfigRepo:
     def __init__(self, db: SQLAlchemySession):
         self.db = db
+
+    def get_job_config(
+        self, job_config_id: UUID, tenant_id: UUID
+    ) -> JobConfigModel | None:
+        return (
+            self.db.query(JobConfigModel)
+            .filter(
+                JobConfigModel.id == job_config_id,
+                JobConfigModel.tenant_id == tenant_id,
+            )
+            .first()
+        )
+
+    def update_job_config(
+        self,
+        job_config: JobConfigModel,
+        updated_by: UUID,
+        name: str | None = None,
+        description: str | None = None,
+    ) -> JobConfigModel:
+        if name is not None:
+            job_config.name = name
+        if description is not None:
+            job_config.description = description
+        job_config.updated_by = updated_by
+        self.db.flush()
+        return job_config
 
     def create_job_config(self, data: JobConfig):
         job_config = JobConfigModel(

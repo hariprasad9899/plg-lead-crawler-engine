@@ -1,8 +1,14 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from typing import Any
 from datetime import datetime
 from uuid import UUID
 from dataclasses import dataclass
+
+from app.core.exceptions.base import AppException
+from app.core.exceptions.error_catalog import (
+    FIELD_CANNOT_BE_BLANK,
+    JOB_CONFIG_UPDATE_FIELDS_REQUIRED,
+)
 
 
 class CreateJobConfigRequest(BaseModel):
@@ -11,6 +17,39 @@ class CreateJobConfigRequest(BaseModel):
     name: str
     description: str
     config: dict[str, Any]
+
+
+class UpdateJobConfigRequest(BaseModel):
+    tenant_id: UUID
+    user_id: UUID
+    name: str | None = None
+    description: str | None = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_not_blank(cls, value: str | None, info):
+        if value is not None and not value.strip():
+            raise AppException(
+                FIELD_CANNOT_BE_BLANK, details={"field": info.field_name}
+            )
+        return value
+
+    @model_validator(mode="after")
+    def validate_update_fields(self):
+        if self.name is None and self.description is None:
+            raise AppException(JOB_CONFIG_UPDATE_FIELDS_REQUIRED)
+        return self
+
+
+class UpdateJobConfigResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    name: str
+    description: str | None
+    created_by: UUID
+    updated_by: UUID | None
+    created_at: datetime
+    updated_at: datetime
 
 
 class JobConfigVersionResponse(BaseModel):

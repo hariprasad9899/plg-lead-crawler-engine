@@ -1,5 +1,4 @@
 from fastapi import Request
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
 from app.core.exceptions.base import AppException
@@ -20,51 +19,34 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    errors = []
+    details = [
+        {
+            "field": ".".join(map(str, err["loc"])),
+            "message": err["msg"],
+        }
+        for err in exc.errors()
+    ]
 
-    for err in exc.errors():
-        errors.append(
-            {
-                "field": ".".join(map(str, err["loc"])),
-                "message": err["msg"],
-            }
-        )
-
-    return JSONResponse(
+    return error_response(
+        code="VALIDATION_ERROR",
+        message="Validation failed",
         status_code=422,
-        content={
-            "success": False,
-            "error": {
-                "code": "VALIDATION_ERROR",
-                "message": "Validation Failed",
-                "errors": errors,
-            },
-        },
+        details=details,
     )
 
 
 async def integrity_exception_handler(request: Request, exc: IntegrityError):
-    return JSONResponse(
+    return error_response(
+        code="DATABASE_CONFLICT",
+        message="Database conflict occured",
         status_code=409,
-        content={
-            "success": False,
-            "error": {
-                "code": "DATABASE_CONFLICT",
-                "message": "Database Conflict occured",
-            },
-        },
     )
 
 
 async def generic_exeption_handler(request: Request, exc: Exception):
     logger.exception(exc)
-    return JSONResponse(
+    return error_response(
+        code="INTERNAL_SERVER_ERROR",
+        message="Something went wrong",
         status_code=500,
-        content={
-            "success": False,
-            "error": {
-                "code": "INTERNAL_SERVER_ERROR",
-                "message": "Something went wrong",
-            },
-        },
     )

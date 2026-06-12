@@ -32,6 +32,11 @@ class JobConfigModel(Base):
         nullable=False,
     )
 
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+
     name: Mapped[str] = mapped_column(
         Text,
         nullable=False,
@@ -46,7 +51,7 @@ class JobConfigModel(Base):
         UUID(as_uuid=True),
         # job_configs <-> job_config_versions form a FK cycle. use_alter
         # emits this FK as a separate ALTER TABLE after both tables exist so
-        # migrations / create_all can resolve table ordering.
+        # create_all can resolve table ordering.
         ForeignKey(
             "job_config_versions.id",
             use_alter=True,
