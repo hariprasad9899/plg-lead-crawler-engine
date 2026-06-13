@@ -81,6 +81,16 @@ class CreateJobConfigVersionRequest(BaseModel):
     tenant_id: UUID
     config: dict[str, Any]
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_required_fields(cls, data):
+        if isinstance(data, dict):
+            required_fields = ["job_config_id", "created_by", "tenant_id", "config"]
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    raise AppException(FIELD_CANNOT_BE_BLANK, details={"field": field})
+        return data
+
 
 class CreateJobConfigVersionResponse(BaseModel):
     id: UUID

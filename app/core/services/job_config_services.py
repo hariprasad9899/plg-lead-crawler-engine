@@ -80,9 +80,11 @@ class JobConfigService:
         self, data: JobConfigVersion
     ) -> CreateJobConfigVersionResponse:
         try:
+            job_config = self.repo.get_job_config(job_config_id=data.job_config_id)
+            if not job_config:
+                raise AppException(JOB_CONFIG_NOT_FOUND)
             job_config_version = self.repo.create_job_config_version(data=data)
             self.repo.db.commit()
-            job_config = job_config_version.job_config
             job_config_data = {
                 "id": str(job_config.id),
                 "tenant_id": str(job_config.tenant_id),

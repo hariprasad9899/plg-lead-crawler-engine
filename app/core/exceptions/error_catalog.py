@@ -173,7 +173,7 @@ GOOGLE_EMAIL_NOT_VERIFIED = ErrorDefinition(
 INVALID_SCHEDULE_EXPRESSION = ErrorDefinition(
     code="INVALID_SCHEDULE_EXPRESSION",
     message="Invalid Schedule Expression",
-    status_code=400
+    status_code=400,
 )
 
 JOB_CONFIG_NOT_FOUND = ErrorDefinition(

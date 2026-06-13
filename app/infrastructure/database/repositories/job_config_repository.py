@@ -68,6 +68,13 @@ class JobConfigRepo:
             .scalar()
         )
 
+    def get_job_config(self, job_config_id: int):
+        return (
+            self.db.query(JobConfigModel)
+            .filter(JobConfigModel.id == job_config_id)
+            .first()
+        )
+
     def create_job_config_version(self, data: JobConfigVersion):
         version_number = self.get_job_config_version_max(
             job_config_id=data.job_config_id
