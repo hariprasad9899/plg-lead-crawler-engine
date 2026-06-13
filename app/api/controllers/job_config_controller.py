@@ -11,6 +11,8 @@ from app.core.schemas.job_config_schemas import (
 )
 from app.core.services.job_config_services import JobConfigService
 from app.core.dependencies.job_config_dependencies import get_job_config_service
+from app.auth.schemas import AuthContext
+from app.auth.dependencies import get_auth_context
 
 router = APIRouter(prefix="/job-config", tags=["JobConfig"])
 settings = Settings()
@@ -19,6 +21,7 @@ settings = Settings()
 @router.post("", response_model=CreateJobConfigResponse)
 def create_job_config(
     req_data: CreateJobConfigRequest,
+    auth: AuthContext = Depends(get_auth_context),
     service: JobConfigService = Depends(get_job_config_service),
 ):
     return service.create_job_config(data=req_data)
@@ -28,15 +31,15 @@ def create_job_config(
 def update_job_config(
     job_config_id: UUID,
     req_data: UpdateJobConfigRequest,
+    auth: AuthContext = Depends(get_auth_context),
     service: JobConfigService = Depends(get_job_config_service),
 ):
-
     return service.update_job_config(job_config_id=job_config_id, data=req_data)
 
 
 @router.post("/versions", response_model=CreateJobConfigVersionRequest)
 def creatr_job_config_version(
-    req_data: CreateJobConfigVersionRequest,
+    req_data: CreateJobConfigVersionResponse,
     service: JobConfigService = Depends(get_job_config_service),
 ):
     return service.create_job_config_version(data=req_data)

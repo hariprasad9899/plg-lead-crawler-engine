@@ -10,3 +10,4 @@ pydantic-settings==2.2.1
 requests==2.31.0
 pwdlib[argon2]
 croniter==6.2.2
+PyJWT==2.8.0
