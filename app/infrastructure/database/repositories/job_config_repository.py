@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session as SQLAlchemySession
 from pydantic import EmailStr
 from app.infrastructure.database.models.job_config import JobConfigModel
 from app.infrastructure.database.models.job_config_versions import JobConfigVersionModel
-from app.core.schemas.job_config_schemas import JobConfig
+from app.core.schemas.job_config_schemas import JobConfig, JobConfigVersion
 
 
 class JobConfigRepo:
@@ -49,6 +49,7 @@ class JobConfigRepo:
         job_config_version = JobConfigVersionModel(
             tenant_id=data.tenant_id,
             job_config_id=job_config.id,
+            created_by=data.created_by,
             version_number=1,
             config=data.config,
         )
@@ -57,3 +58,27 @@ class JobConfigRepo:
         job_config.current_version_id = job_config_version.id
         self.db.flush()
         return [job_config, job_config_version]
+
+    def get_job_config_version_max(self, job_config_id: int):
+        return (
+            self.db.query(JobConfigVersionModel.version_number)
+            .filter(JobConfigVersionModel.job_config_id == job_config_id)
+            .order_by(JobConfigVersionModel.version_number.desc())
+            .limit(1)
+            .scalar()
+        )
+
+    def create_job_config_version(self, data: JobConfigVersion):
+        version_number = self.get_job_config_version_max(
+            job_config_id=data.job_config_id
+        )
+        job_config_version = JobConfigVersionModel(
+            tenant_id=data.tenant_id,
+            job_config_id=data.job_config_id,
+            created_by=data.created_by,
+            version_number=version_number + 1,
+            config=data.config,
+        )
+        self.db.add(job_config_version)
+        self.db.flush()
+        return job_config_version

@@ -21,7 +21,7 @@ class CreateJobConfigRequest(BaseModel):
 
 class UpdateJobConfigRequest(BaseModel):
     tenant_id: UUID
-    user_id: UUID
+    updated_by: UUID
     name: str | None = None
     description: str | None = None
 
@@ -57,9 +57,32 @@ class JobConfigVersionResponse(BaseModel):
     version_number: int
     config: dict[str, Any]
     created_at: datetime
+    created_by: UUID
+    updated_at: datetime
+    updated_by: UUID
 
 
 class CreateJobConfigResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    name: str
+    description: str
+    created_by: UUID
+    current_version: JobConfigVersionResponse
+    created_at: datetime
+    created_by: UUID
+    updated_at: datetime
+    updated_by: UUID
+
+
+class CreateJobConfigVersionRequest(BaseModel):
+    job_config_id: UUID
+    created_by: UUID
+    tenant_id: UUID
+    config: dict[str, Any]
+
+
+class CreateJobConfigVersionResponse(BaseModel):
     id: UUID
     tenant_id: UUID
     name: str
@@ -76,4 +99,12 @@ class JobConfig:
     created_by: UUID
     name: str
     description: str
+    config: dict[str, Any]
+
+
+@dataclass
+class JobConfigVersion:
+    job_config_id: UUID
+    tenant_id: UUID
+    created_by: UUID
     config: dict[str, Any]
