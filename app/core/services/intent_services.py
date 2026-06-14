@@ -16,6 +16,10 @@ from app.core.utils.crontier import compute_timestamp_from_cron
 from uuid import UUID
 from app.core.utils.response import success_response
 from app.core.ai.intent.intent_normalizer import IntentNormalizer
+from app.search_worker.task import generate_search_queries
+from app.core.logger import get_logger
+
+logger = get_logger()
 
 
 class IntentService:
@@ -49,14 +53,19 @@ class IntentService:
                 next_run_at=next_run_at,
                 current_config_version_id=data.job_config_id,
             )
+            logger.info("Creating Intent Job")
             intent_job = self.intent_repo.create_intent(data=intent_job_data)
 
-            self.job_run_service.create_job_run(
+            logger.info("Creating Job Run")
+            job_run = self.job_run_service.create_job_run(
                 intent_job_id=intent_job.id,
                 job_config_version_id=data.job_config_id,
                 tenant_id=tenant_id,
                 created_by=user_id,
             )
+
+            logger.info("Triggering Job Run")
+            generate_search_queries.delay(str(job_run.id))
 
             self.intent_repo.db.commit()
             res_data = {

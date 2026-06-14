@@ -11,3 +11,5 @@ requests==2.31.0
 pwdlib[argon2]
 croniter==6.2.2
 PyJWT==2.8.0
+celery==5.5.3
+redis==6.4.0
