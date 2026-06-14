@@ -5,6 +5,7 @@ from app.core.exceptions.error_catalog import (
 )
 from app.infrastructure.database.repositories.intent_repository import IntentRepo
 from app.infrastructure.database.repositories.job_config_repository import JobConfigRepo
+from app.core.services.job_run_service import JobRunService
 from app.core.schemas.intents_schemas import (
     IntentJobCreate,
     CreateIntentJobsRequest,
@@ -19,9 +20,15 @@ from app.core.utils.response import success_response
 
 
 class IntentService:
-    def __init__(self, intent_repo: IntentRepo, job_config_repo: JobConfigRepo):
+    def __init__(
+        self,
+        intent_repo: IntentRepo,
+        job_config_repo: JobConfigRepo,
+        job_run_service: JobRunService,
+    ):
         self.intent_repo = intent_repo
         self.job_config_repo = job_config_repo
+        self.job_run_service = job_run_service
 
     def create_intent(
         self, tenant_id: UUID, user_id: UUID, data: CreateIntentJobsRequest
@@ -43,6 +50,14 @@ class IntentService:
                 current_config_version_id=data.job_config_id,
             )
             intent_job = self.intent_repo.create_intent(data=intent_job_data)
+
+            self.job_run_service.create_job_run(
+                intent_job_id=intent_job.id,
+                job_config_version_id=data.job_config_id,
+                tenant_id=tenant_id,
+                created_by=user_id,
+            )
+
             self.intent_repo.db.commit()
             res_data = {
                 "id": intent_job.id,

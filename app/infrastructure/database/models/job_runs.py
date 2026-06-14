@@ -34,6 +34,10 @@ class JobRun(Base):
         UUID(as_uuid=True),
         nullable=False,
     )
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=False,
+    )
     intent_job_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("intent_jobs.id", ondelete="CASCADE"),
