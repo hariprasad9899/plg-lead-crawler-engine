@@ -96,8 +96,8 @@ class JobRun(Base):
         "JobConfigVersionModel",
         back_populates="job_runs",
     )
-    generated_intents = relationship(
-        "GeneratedIntent",
+    search_queries = relationship(
+        "SearchQuery",
         back_populates="job_run",
         cascade="all, delete-orphan",
     )
