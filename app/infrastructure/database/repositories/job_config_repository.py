@@ -37,19 +37,19 @@ class JobConfigRepo:
         self.db.flush()
         return job_config
 
-    def create_job_config(self, data: JobConfig):
+    def create_job_config(self, data: JobConfig, tenant_id: UUID, user_id: UUID):
         job_config = JobConfigModel(
-            tenant_id=data.tenant_id,
-            created_by=data.created_by,
+            tenant_id=tenant_id,
+            created_by=user_id,
             name=data.name,
             description=data.description,
         )
         self.db.add(job_config)
         self.db.flush()
         job_config_version = JobConfigVersionModel(
-            tenant_id=data.tenant_id,
+            tenant_id=tenant_id,
             job_config_id=job_config.id,
-            created_by=data.created_by,
+            created_by=user_id,
             version_number=1,
             config=data.config,
         )
@@ -59,7 +59,7 @@ class JobConfigRepo:
         self.db.flush()
         return [job_config, job_config_version]
 
-    def get_job_config_version_max(self, job_config_id: int):
+    def get_job_config_version_max(self, job_config_id: UUID):
         return (
             self.db.query(JobConfigVersionModel.version_number)
             .filter(JobConfigVersionModel.job_config_id == job_config_id)
@@ -68,21 +68,16 @@ class JobConfigRepo:
             .scalar()
         )
 
-    def get_job_config(self, job_config_id: int):
-        return (
-            self.db.query(JobConfigModel)
-            .filter(JobConfigModel.id == job_config_id)
-            .first()
-        )
-
-    def create_job_config_version(self, data: JobConfigVersion):
+    def create_job_config_version(
+        self, tenant_id: UUID, user_id: UUID, data: JobConfigVersion
+    ):
         version_number = self.get_job_config_version_max(
             job_config_id=data.job_config_id
         )
         job_config_version = JobConfigVersionModel(
-            tenant_id=data.tenant_id,
+            tenant_id=tenant_id,
             job_config_id=data.job_config_id,
-            created_by=data.created_by,
+            created_by=user_id,
             version_number=version_number + 1,
             config=data.config,
         )

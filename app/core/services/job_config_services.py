@@ -18,18 +18,22 @@ class JobConfigService:
         self.repo = repo
 
     def update_job_config(
-        self, job_config_id: UUID, data: UpdateJobConfigRequest
+        self,
+        job_config_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        data: UpdateJobConfigRequest,
     ) -> UpdateJobConfigResponse:
         try:
             job_config = self.repo.get_job_config(
-                job_config_id=job_config_id, tenant_id=data.tenant_id
+                job_config_id=job_config_id, tenant_id=tenant_id
             )
             if job_config is None:
                 raise AppException(JOB_CONFIG_NOT_FOUND)
 
             job_config = self.repo.update_job_config(
                 job_config=job_config,
-                updated_by=data.updated_by,
+                updated_by=user_id,
                 name=data.name,
                 description=data.description,
             )
@@ -53,9 +57,13 @@ class JobConfigService:
             self.repo.db.rollback()
             raise
 
-    def create_job_config(self, data: JobConfig) -> CreateJobConfigResponse:
+    def create_job_config(
+        self, tenant_id: UUID, user_id: UUID, data: JobConfig
+    ) -> CreateJobConfigResponse:
         try:
-            job_config, job_config_version = self.repo.create_job_config(data=data)
+            job_config, job_config_version = self.repo.create_job_config(
+                data=data, user_id=user_id, tenant_id=tenant_id
+            )
             self.repo.db.commit()
             job_config_data = {
                 "id": str(job_config.id),
@@ -77,13 +85,17 @@ class JobConfigService:
             raise
 
     def create_job_config_version(
-        self, data: JobConfigVersion
+        self, tenant_id: UUID, user_id: UUID, data: JobConfigVersion
     ) -> CreateJobConfigVersionResponse:
         try:
-            job_config = self.repo.get_job_config(job_config_id=data.job_config_id)
+            job_config = self.repo.get_job_config(
+                job_config_id=data.job_config_id, tenant_id=tenant_id
+            )
             if not job_config:
                 raise AppException(JOB_CONFIG_NOT_FOUND)
-            job_config_version = self.repo.create_job_config_version(data=data)
+            job_config_version = self.repo.create_job_config_version(
+                tenant_id=tenant_id, user_id=user_id, data=data
+            )
             self.repo.db.commit()
             job_config_data = {
                 "id": str(job_config.id),

@@ -24,7 +24,11 @@ def create_job_config(
     auth: AuthContext = Depends(get_auth_context),
     service: JobConfigService = Depends(get_job_config_service),
 ):
-    return service.create_job_config(data=req_data)
+    tenant_id = auth.tenant_id
+    user_id = auth.user_id
+    return service.create_job_config(
+        tenant_id=tenant_id, user_id=user_id, data=req_data
+    )
 
 
 @router.patch("/{job_config_id}", response_model=UpdateJobConfigResponse)
@@ -34,13 +38,21 @@ def update_job_config(
     auth: AuthContext = Depends(get_auth_context),
     service: JobConfigService = Depends(get_job_config_service),
 ):
-    return service.update_job_config(job_config_id=job_config_id, data=req_data)
+    tenant_id = auth.tenant_id
+    user_id = auth.user_id
+    return service.update_job_config(
+        job_config_id=job_config_id, tenant_id=tenant_id, user_id=user_id, data=req_data
+    )
 
 
 @router.post("/versions", response_model=CreateJobConfigVersionResponse)
-def creatr_job_config_version(
+def create_job_config_version(
     req_data: CreateJobConfigVersionRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: JobConfigService = Depends(get_job_config_service),
 ):
-    return service.create_job_config_version(data=req_data)
+    tenant_id = auth.tenant_id
+    user_id = auth.user_id
+    return service.create_job_config_version(
+        tenant_id=tenant_id, user_id=user_id, data=req_data
+    )

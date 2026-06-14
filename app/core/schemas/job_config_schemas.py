@@ -20,8 +20,6 @@ class CreateJobConfigRequest(BaseModel):
 
 
 class UpdateJobConfigRequest(BaseModel):
-    tenant_id: UUID
-    updated_by: UUID
     name: str | None = None
     description: str | None = None
 
@@ -77,15 +75,13 @@ class CreateJobConfigResponse(BaseModel):
 
 class CreateJobConfigVersionRequest(BaseModel):
     job_config_id: UUID
-    created_by: UUID
-    tenant_id: UUID
     config: dict[str, Any]
 
     @model_validator(mode="before")
     @classmethod
     def validate_required_fields(cls, data):
         if isinstance(data, dict):
-            required_fields = ["job_config_id", "created_by", "tenant_id", "config"]
+            required_fields = ["job_config_id", "config"]
             for field in required_fields:
                 if field not in data or not data[field]:
                     raise AppException(FIELD_CANNOT_BE_BLANK, details={"field": field})
@@ -105,8 +101,6 @@ class CreateJobConfigVersionResponse(BaseModel):
 
 @dataclass
 class JobConfig:
-    tenant_id: UUID
-    created_by: UUID
     name: str
     description: str
     config: dict[str, Any]
@@ -115,6 +109,4 @@ class JobConfig:
 @dataclass
 class JobConfigVersion:
     job_config_id: UUID
-    tenant_id: UUID
-    created_by: UUID
     config: dict[str, Any]
