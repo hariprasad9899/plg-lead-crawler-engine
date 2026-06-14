@@ -37,9 +37,10 @@ def update_job_config(
     return service.update_job_config(job_config_id=job_config_id, data=req_data)
 
 
-@router.post("/versions", response_model=CreateJobConfigVersionRequest)
+@router.post("/versions", response_model=CreateJobConfigVersionResponse)
 def creatr_job_config_version(
-    req_data: CreateJobConfigVersionResponse,
+    req_data: CreateJobConfigVersionRequest,
+    auth: AuthContext = Depends(get_auth_context),
     service: JobConfigService = Depends(get_job_config_service),
 ):
     return service.create_job_config_version(data=req_data)
