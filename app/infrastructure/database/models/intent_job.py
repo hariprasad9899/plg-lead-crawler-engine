@@ -55,10 +55,12 @@ class IntentJob(Base):
         default=JobStatusEnum.ACTIVE,
     )
     
-    selected_config_version_id: Mapped[uuid.UUID] = mapped_column(
+    # Set later, once intent generation has produced a config version to run.
+    # Null at job-creation time, so this FK must be nullable.
+    selected_config_version_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("job_config_versions.id"),
-        nullable=False,
+        nullable=True,
     )
     schedule_type: Mapped[str] = mapped_column(
         String(20),

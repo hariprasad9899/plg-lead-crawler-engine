@@ -6,8 +6,6 @@ from uuid import UUID
 
 
 class CreateIntentJobsRequest(BaseModel):
-    tenant_id: UUID
-    created_by: UUID
     request_name: str
     original_query: str
     schedule_expression: str = "0 */6 * * *"
