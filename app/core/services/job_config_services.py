@@ -1,6 +1,9 @@
 from uuid import UUID
 from app.core.exceptions.base import AppException
-from app.core.exceptions.error_catalog import JOB_CONFIG_NOT_FOUND
+from app.core.exceptions.error_catalog import (
+    JOB_CONFIG_NOT_FOUND,
+    JOB_CONFIG_VERSION_NOT_FOUND,
+)
 from app.infrastructure.database.repositories.job_config_repository import JobConfigRepo
 from app.core.schemas.job_config_schemas import (
     CreateJobConfigResponse,
@@ -115,3 +118,11 @@ class JobConfigService:
         except Exception:
             self.repo.db.rollback()
             raise
+
+    def get_job_config_version(self, job_config_version_id: UUID, tenant_id: UUID):
+        job_config_version = self.repo.get_job_config_version(
+            job_config_version_id=job_config_version_id, tenant_id=tenant_id
+        )
+        if not job_config_version:
+            raise AppException(JOB_CONFIG_VERSION_NOT_FOUND)
+        return job_config_version

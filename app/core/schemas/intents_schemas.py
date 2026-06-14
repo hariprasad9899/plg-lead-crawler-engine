@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
 from dataclasses import dataclass
 from uuid import UUID
@@ -48,3 +48,12 @@ class IntentJobCreate:
     schedule_expression: str = "0 */6 * * *"
     next_run_at: datetime | None = None
     current_config_version_id: UUID | None = None
+
+
+@dataclass
+class IntentGenerationInput:
+    request_name: str
+    original_query: str
+    config: dict[str, Any]
+    config_name: str
+    config_description: str | None = None

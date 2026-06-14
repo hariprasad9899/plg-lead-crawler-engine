@@ -1,10 +1,7 @@
 from app.core.exceptions.base import AppException
-from app.core.exceptions.error_catalog import (
-    JOB_CONFIG_VERSION_NOT_FOUND,
-    INTENT_JOB_NOT_FOUND,
-)
+from app.core.exceptions.error_catalog import INTENT_JOB_NOT_FOUND
 from app.infrastructure.database.repositories.intent_repository import IntentRepo
-from app.infrastructure.database.repositories.job_config_repository import JobConfigRepo
+from app.core.services.job_config_services import JobConfigService
 from app.core.services.job_run_service import JobRunService
 from app.core.schemas.intents_schemas import (
     IntentJobCreate,
@@ -12,23 +9,26 @@ from app.core.schemas.intents_schemas import (
     CreateIntentJobsResponse,
     UpdatedIntentJobConfigVersion,
     UpdatedIntentJobConfigVersionResponse,
+    IntentGenerationInput,
 )
 from app.core.config.constants import APP_CONSTANTS
 from app.core.utils.crontier import compute_timestamp_from_cron
 from uuid import UUID
 from app.core.utils.response import success_response
+from app.core.ai.intent.intent_normalizer import IntentNormalizer
 
 
 class IntentService:
     def __init__(
         self,
         intent_repo: IntentRepo,
-        job_config_repo: JobConfigRepo,
+        job_config_service: JobConfigService,
         job_run_service: JobRunService,
     ):
         self.intent_repo = intent_repo
-        self.job_config_repo = job_config_repo
+        self.job_config_service = job_config_service
         self.job_run_service = job_run_service
+        self.intent_normalizer = IntentNormalizer()
 
     def create_intent(
         self, tenant_id: UUID, user_id: UUID, data: CreateIntentJobsRequest
@@ -82,11 +82,11 @@ class IntentService:
         data: UpdatedIntentJobConfigVersion,
     ) -> UpdatedIntentJobConfigVersionResponse:
         try:
-            job_config_version = self.job_config_repo.get_job_config_version(
-                job_config_version_id=data.job_config_version_id, tenant_id=tenant_id
-            )
-            if data.job_config_version_id and not job_config_version:
-                raise AppException(JOB_CONFIG_VERSION_NOT_FOUND)
+            if data.job_config_version_id:
+                job_config_version = self.job_config_service.get_job_config_version(
+                    job_config_version_id=data.job_config_version_id,
+                    tenant_id=tenant_id,
+                )
 
             intent_job = self.intent_repo.updated_config_version(
                 tenant_id=tenant_id,
