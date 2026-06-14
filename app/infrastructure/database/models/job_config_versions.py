@@ -80,7 +80,7 @@ class JobConfigVersionModel(Base):
 
     intent_jobs = relationship(
         "IntentJob",
-        back_populates="selected_config_version",
+        back_populates="current_config_version",
     )
 
     job_runs = relationship(

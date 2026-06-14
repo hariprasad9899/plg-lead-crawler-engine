@@ -37,6 +37,10 @@ class IntentJob(Base):
         UUID(as_uuid=True),
         nullable=False,
     )
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
     request_name: Mapped[str] = mapped_column(
         Text,
         nullable=False,
@@ -54,10 +58,10 @@ class IntentJob(Base):
         nullable=False,
         default=JobStatusEnum.ACTIVE,
     )
-    
+
     # Set later, once intent generation has produced a config version to run.
     # Null at job-creation time, so this FK must be nullable.
-    selected_config_version_id: Mapped[uuid.UUID | None] = mapped_column(
+    current_config_version_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("job_config_versions.id"),
         nullable=True,
@@ -91,9 +95,9 @@ class IntentJob(Base):
         back_populates="intent_job",
         cascade="all, delete-orphan",
     )
-    selected_config_version = relationship(
+    current_config_version = relationship(
         "JobConfigVersionModel",
-        foreign_keys=[selected_config_version_id],
+        foreign_keys=[current_config_version_id],
     )
     __table_args__ = (
         Index("idx_intent_jobs_status", "status"),
@@ -107,5 +111,5 @@ class IntentJob(Base):
         Index("idx_intent_jobs_tenant", "tenant_id"),
         Index("idx_intent_jobs_created_by", "created_by"),
         # Supports "which jobs use config version X" lookups.
-        Index("idx_intent_jobs_config_version", "selected_config_version_id"),
+        Index("idx_intent_jobs_config_version", "current_config_version_id"),
     )

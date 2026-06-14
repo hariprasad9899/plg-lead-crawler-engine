@@ -22,6 +22,18 @@ class JobConfigRepo:
             .first()
         )
 
+    def get_job_config_version(
+        self, job_config_version_id: UUID, tenant_id: UUID
+    ) -> JobConfigVersionModel | None:
+        return (
+            self.db.query(JobConfigVersionModel)
+            .filter(
+                JobConfigVersionModel.id == job_config_version_id,
+                JobConfigVersionModel.tenant_id == tenant_id,
+            )
+            .first()
+        )
+
     def update_job_config(
         self,
         job_config: JobConfigModel,

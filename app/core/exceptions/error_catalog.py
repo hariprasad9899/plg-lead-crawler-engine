@@ -178,7 +178,19 @@ INVALID_SCHEDULE_EXPRESSION = ErrorDefinition(
 
 JOB_CONFIG_NOT_FOUND = ErrorDefinition(
     code="JOB_CONFIG_NOT_FOUND",
-    message="Job config not found.",
+    message="Job Configuration not found.",
+    status_code=404,
+)
+
+JOB_CONFIG_VERSION_NOT_FOUND = ErrorDefinition(
+    code="JOB_CONFIG_VERSION_NOT_FOUND",
+    message="Job Configuration not found.",
+    status_code=404,
+)
+
+INTENT_JOB_NOT_FOUND = ErrorDefinition(
+    code="INTENT_JOB_NOT_FOUND",
+    message="Intent job not found.",
     status_code=404,
 )
 

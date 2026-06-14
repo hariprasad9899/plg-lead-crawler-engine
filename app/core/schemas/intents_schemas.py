@@ -24,6 +24,21 @@ class CreateIntentJobsResponse(BaseModel):
     created_by: UUID
 
 
+class UpdatedIntentJobConfigVersionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    tenant_id: UUID
+    request_name: str
+    status: str
+    job_config_id: UUID | None = None
+    updated_at: datetime
+    updated_by: UUID | None = None
+
+
+class UpdatedIntentJobConfigVersion(BaseModel):
+    job_config_version_id: UUID | None = None
+
+
 @dataclass
 class IntentJobCreate:
     tenant_id: UUID
@@ -32,4 +47,4 @@ class IntentJobCreate:
     original_query: str
     schedule_expression: str = "0 */6 * * *"
     next_run_at: datetime | None = None
-    selected_config_version_id: UUID | None = None
+    current_config_version_id: UUID | None = None
