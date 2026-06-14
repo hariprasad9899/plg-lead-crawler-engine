@@ -9,6 +9,7 @@ class CreateIntentJobsRequest(BaseModel):
     request_name: str
     original_query: str
     schedule_expression: str = "0 */6 * * *"
+    job_config_id: UUID | None = None
 
 
 class CreateIntentJobsResponse(BaseModel):
@@ -18,6 +19,7 @@ class CreateIntentJobsResponse(BaseModel):
     request_name: str
     status: str
     schedule_expression: str
+    job_config_id: UUID | None = None
     created_at: datetime
     created_by: UUID
 
@@ -30,3 +32,4 @@ class IntentJobCreate:
     original_query: str
     schedule_expression: str = "0 */6 * * *"
     next_run_at: datetime | None = None
+    selected_config_version_id: UUID | None = None

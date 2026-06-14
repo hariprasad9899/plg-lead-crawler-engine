@@ -5,7 +5,6 @@ from app.core.schemas.intents_schemas import (
     CreateIntentJobsRequest,
     CreateIntentJobsResponse,
 )
-from dataclasses import asdict
 from app.core.config.constants import APP_CONSTANTS
 from app.core.utils.crontier import compute_timestamp_from_cron
 from uuid import UUID
@@ -19,17 +18,21 @@ class IntentService:
         self, tenant_id: UUID, user_id: UUID, data: CreateIntentJobsRequest
     ) -> CreateIntentJobsResponse:
         try:
-            intent_data = data.model_dump()
-            schedule_expression = intent_data.get(
-                "schedule_expression", APP_CONSTANTS.DEFAULT_SCHEDULE_EXP
+            schedule_expression = (
+                data.schedule_expression or APP_CONSTANTS.DEFAULT_SCHEDULE_EXP
             )
             next_run_at = compute_timestamp_from_cron(
                 cron_expression=schedule_expression
             )
-            intent_data["next_run_at"] = next_run_at
-            intent_data["tenant_id"] = tenant_id
-            intent_data["created_by"] = user_id
-            intent_job_data = IntentJobCreate(**intent_data)
+            intent_job_data = IntentJobCreate(
+                tenant_id=tenant_id,
+                created_by=user_id,
+                request_name=data.request_name,
+                original_query=data.original_query,
+                schedule_expression=schedule_expression,
+                next_run_at=next_run_at,
+                selected_config_version_id=data.job_config_id,
+            )
             intent_job = self.intent_repo.create_intent(data=intent_job_data)
             self.intent_repo.db.commit()
             res_data = {
@@ -38,6 +41,7 @@ class IntentService:
                 "request_name": intent_job.request_name,
                 "status": intent_job.status,
                 "schedule_expression": intent_job.schedule_expression,
+                "job_config_id": intent_job.selected_config_version_id,
                 "created_at": intent_job.created_at,
                 "created_by": intent_job.created_by,
             }
@@ -45,5 +49,3 @@ class IntentService:
         except Exception:
             self.intent_repo.db.rollback()
             raise
-    
-    
