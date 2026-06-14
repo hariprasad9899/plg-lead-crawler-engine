@@ -20,7 +20,8 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     yield
 
-app = FastAPI(title="auth-service",lifespan=lifespan)
+
+app = FastAPI(title="crawler-engine", lifespan=lifespan)
 
 origins = [
     "http://localhost",
