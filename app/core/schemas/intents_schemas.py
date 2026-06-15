@@ -54,6 +54,6 @@ class IntentJobCreate:
 class IntentGenerationInput:
     request_name: str
     original_query: str
-    config: dict[str, Any]
     config_name: str
+    config: dict[str, Any] | None = None
     config_description: str | None = None

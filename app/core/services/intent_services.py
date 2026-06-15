@@ -18,6 +18,8 @@ from app.core.utils.response import success_response
 from app.core.ai.intent.intent_normalizer import IntentNormalizer
 from app.search_worker.task import generate_search_queries
 from app.core.logger import get_logger
+from app.core.exceptions.error_catalog import JOB_CONFIG_NOT_FOUND
+from dataclasses import asdict
 
 logger = get_logger()
 
@@ -64,8 +66,26 @@ class IntentService:
                 created_by=user_id,
             )
 
+            job_config_version = self.job_config_service.get_job_config_version(
+                job_config_version_id=intent_job.current_config_version_id,
+                tenant_id=tenant_id,
+            )
+            if not job_config_version:
+                raise AppException(JOB_CONFIG_NOT_FOUND)
+
+            job_config = job_config_version.job_config
+            if not job_config:
+                raise AppException(JOB_CONFIG_NOT_FOUND)
+
+            intent_generation_input = IntentGenerationInput(
+                request_name=intent_job.request_name,
+                original_query=intent_job.original_query,
+                config=job_config_version.config,
+                config_name=job_config.name,
+                config_description=job_config.description,
+            )
             logger.info("Triggering Job Run")
-            generate_search_queries.delay(str(job_run.id))
+            generate_search_queries.delay(str(job_run.id), asdict(intent_generation_input))
 
             self.intent_repo.db.commit()
             res_data = {

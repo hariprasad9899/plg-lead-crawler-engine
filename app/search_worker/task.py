@@ -5,6 +5,7 @@ logger = get_logger()
 
 
 @celery_app.task
-def generate_search_queries(job_run_id: str):
+def generate_search_queries(job_run_id: str, intent_gen_input: dict):
     logger.info(f"Received Message through Queue {job_run_id}")
     print(job_run_id)
+    print(intent_gen_input)
