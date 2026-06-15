@@ -205,3 +205,21 @@ JOB_CONFIG_UPDATE_FIELDS_REQUIRED = ErrorDefinition(
     message="At least one of 'name' or 'description' must be provided.",
     status_code=400,
 )
+
+JOB_RUN_NOT_FOUND = ErrorDefinition(
+    code="JOB_RUN_NOT_FOUND",
+    message="Job run not found.",
+    status_code=404,
+)
+
+LLM_PROVIDER_NOT_CONFIGURED = ErrorDefinition(
+    code="LLM_PROVIDER_NOT_CONFIGURED",
+    message="LLM provider is not configured.",
+    status_code=500,
+)
+
+SEARCH_QUERY_GENERATION_FAILED = ErrorDefinition(
+    code="SEARCH_QUERY_GENERATION_FAILED",
+    message="Failed to generate search queries.",
+    status_code=502,
+)

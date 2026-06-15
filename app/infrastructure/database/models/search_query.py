@@ -55,6 +55,11 @@ class SearchQuery(Base):
         default=50,
     )
 
+    strategy: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
     status: Mapped[QueryStatusEnum] = mapped_column(
         SqlEnum(
             QueryStatusEnum,
