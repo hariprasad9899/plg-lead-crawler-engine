@@ -32,9 +32,15 @@ provided configuration makes it sensible:
 {strategy_guide}
 
 Rules:
-- Each query must be specific, natural, and immediately usable as a search string.
-- Combine signals from the configuration (industries, locations, seniority, \
-keywords, company size) rather than restating a single field.
+- Write each query the way a person actually types into Google: a short, \
+natural keyword phrase, ideally 3-8 words and never more than 12.
+- Do NOT use search operators or boolean syntax. No AND, OR, parentheses, \
+quotation marks, or field filters. Plain natural words only.
+- Do NOT cram every signal into one query. Spread the different signals \
+(industry, persona, location, hiring, growth, size) across SEPARATE queries — \
+that is the purpose of generating many queries. A single query may blend at \
+most two complementary signals (e.g. persona + industry, or industry + location) \
+only if it still reads like a natural search phrase.
 - Do NOT invent locations, industries or roles that contradict the configuration.
 - Assign priority from 1 (highest) to {max_queries}; the most likely to surface \
 qualified leads should get the lowest numbers.

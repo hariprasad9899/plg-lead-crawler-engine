@@ -1,8 +1,8 @@
 from uuid import UUID
-
 from app.core.dependencies.search_generation_dependencies import (
     build_search_generation_service,
 )
+from app.core.dependencies.search_url_dependencies import build_search_url_service
 from app.core.logger.logger import get_logger
 from app.core.queue.celery_app import celery_app
 from app.core.schemas.intents_schemas import IntentGenerationInput
@@ -35,8 +35,28 @@ def generate_search_queries(self, job_run_id: str, intent_gen_input: dict):
             intent_input=intent_input,
         )
         logger.info(f"Generated {len(created)} search queries for job_run={job_run_id}")
+        discover_search_urls.delay(job_run_id)
         return {"job_run_id": job_run_id, "queries_generated": len(created)}
     except Exception as exc:
         # The service has already marked the run FAILED; retry transient errors.
         logger.error(f"Task failed for job_run={job_run_id}: {exc}")
+        raise self.retry(exc=exc)
+
+
+@celery_app.task(
+    name="search_worker.discover_search_urls",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=10,
+    acks_late=True,
+)
+def discover_search_urls(self, job_run_id: str):
+    logger.info(f"REceived URL Discovery task for job run={job_run_id}")
+    service = build_search_url_service()
+    try:
+        count = service.discover_for_job_run(job_run_id=UUID(job_run_id))
+        logger.info(f"Discovered {count} URLS for job_run={job_run_id}")
+        return {"job_run_id": job_run_id, "urls_discovered": count}
+    except Exception as exc:
+        logger.error(f"URL Discovery task failed for job_run={job_run_id}: {exc}")
         raise self.retry(exc=exc)

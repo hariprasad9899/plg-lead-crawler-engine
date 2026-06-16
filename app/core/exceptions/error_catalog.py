@@ -223,3 +223,9 @@ SEARCH_QUERY_GENERATION_FAILED = ErrorDefinition(
     message="Failed to generate search queries.",
     status_code=502,
 )
+
+SEARCH_PROVIDER_NOT_CONFIGURED = ErrorDefinition(
+    code="SEARCH_PROVIDER_NOT_CONFIGURED",
+    message="Search provider is not configured.",
+    status_code=500,
+)

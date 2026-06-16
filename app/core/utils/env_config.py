@@ -14,6 +14,14 @@ class Settings(BaseSettings):
     search_query_min: int = 1
     search_query_max: int = 1
 
+    # search url generation
+    search_provider: str = "serper"
+    serper_api_key: str = ""
+    serper_base_url: str = "https://google.serper.dev/search"
+    serper_num_results: int = 10
+    serper_timeout: float = 30.0
+    serper_max_retries: int = 2
+
     class Config:
         env_file = ".env"
 

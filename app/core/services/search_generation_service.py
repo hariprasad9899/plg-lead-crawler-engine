@@ -1,8 +1,6 @@
 from typing import Callable
 from uuid import UUID
-
 from sqlalchemy.orm import Session as SQLAlchemySession
-
 from app.core.ai.search_query.intent_generator import IntentGenerator
 from app.core.exceptions.base import AppException
 from app.core.exceptions.error_catalog import JOB_RUN_NOT_FOUND
