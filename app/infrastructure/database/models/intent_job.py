@@ -11,6 +11,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.infrastructure.database.base import Base
@@ -48,6 +49,10 @@ class IntentJob(Base):
     original_query: Mapped[str] = mapped_column(
         Text,
         nullable=False,
+    )
+    intent_embedding: Mapped[list | None] = mapped_column(
+        Vector,
+        nullable=True,
     )
     status: Mapped[JobStatusEnum] = mapped_column(
         SqlEnum(

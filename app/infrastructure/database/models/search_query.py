@@ -38,9 +38,9 @@ class SearchQuery(Base):
         nullable=False,
     )
 
-    generated_intent_id: Mapped[uuid.UUID] = mapped_column(
+    job_run_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("generated_intents.id", ondelete="CASCADE"),
+        ForeignKey("job_runs.id", ondelete="CASCADE"),
         nullable=False,
     )
 
@@ -49,14 +49,15 @@ class SearchQuery(Base):
         nullable=False,
     )
 
-    source: Mapped[str | None] = mapped_column(
-        String(50),
-    )
-
     priority: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=50,
+    )
+
+    strategy: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
     )
 
     status: Mapped[QueryStatusEnum] = mapped_column(
@@ -69,14 +70,24 @@ class SearchQuery(Base):
         default=QueryStatusEnum.PENDING,
     )
 
+    llm_provider: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    llm_model: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=text("now()"),
     )
 
-    generated_intent = relationship(
-        "GeneratedIntent",
+    job_run = relationship(
+        "JobRun",
         back_populates="search_queries",
     )
 
@@ -92,8 +103,8 @@ class SearchQuery(Base):
             "tenant_id",
         ),
         Index(
-            "idx_search_queries_intent",
-            "generated_intent_id",
+            "idx_search_queries_job_run",
+            "job_run_id",
         ),
         Index(
             "idx_search_queries_tenant_status",

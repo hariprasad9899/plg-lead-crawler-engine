@@ -1,27 +1,39 @@
 from app.core.exceptions.base import AppException
-from app.core.exceptions.error_catalog import (
-    JOB_CONFIG_VERSION_NOT_FOUND,
-    INTENT_JOB_NOT_FOUND,
-)
+from app.core.exceptions.error_catalog import INTENT_JOB_NOT_FOUND
 from app.infrastructure.database.repositories.intent_repository import IntentRepo
-from app.infrastructure.database.repositories.job_config_repository import JobConfigRepo
+from app.core.services.job_config_services import JobConfigService
+from app.core.services.job_run_service import JobRunService
 from app.core.schemas.intents_schemas import (
     IntentJobCreate,
     CreateIntentJobsRequest,
     CreateIntentJobsResponse,
     UpdatedIntentJobConfigVersion,
     UpdatedIntentJobConfigVersionResponse,
+    IntentGenerationInput,
 )
 from app.core.config.constants import APP_CONSTANTS
 from app.core.utils.crontier import compute_timestamp_from_cron
 from uuid import UUID
 from app.core.utils.response import success_response
+from app.core.ai.intent.intent_normalizer import IntentNormalizer
+from app.core.logger import get_logger
+from app.core.exceptions.error_catalog import JOB_CONFIG_NOT_FOUND
+from dataclasses import asdict
+
+logger = get_logger()
 
 
 class IntentService:
-    def __init__(self, intent_repo: IntentRepo, job_config_repo: JobConfigRepo):
+    def __init__(
+        self,
+        intent_repo: IntentRepo,
+        job_config_service: JobConfigService,
+        job_run_service: JobRunService,
+    ):
         self.intent_repo = intent_repo
-        self.job_config_repo = job_config_repo
+        self.job_config_service = job_config_service
+        self.job_run_service = job_run_service
+        self.intent_normalizer = IntentNormalizer()
 
     def create_intent(
         self, tenant_id: UUID, user_id: UUID, data: CreateIntentJobsRequest
@@ -42,7 +54,53 @@ class IntentService:
                 next_run_at=next_run_at,
                 current_config_version_id=data.job_config_id,
             )
+            logger.info("Creating Intent Job")
             intent_job = self.intent_repo.create_intent(data=intent_job_data)
+
+            logger.info("Creating Job Run")
+            job_run = self.job_run_service.create_job_run(
+                intent_job_id=intent_job.id,
+                job_config_version_id=data.job_config_id,
+                tenant_id=tenant_id,
+                created_by=user_id,
+            )
+
+            job_config_version = self.job_config_service.get_job_config_version(
+                job_config_version_id=intent_job.current_config_version_id,
+                tenant_id=tenant_id,
+            )
+            if not job_config_version:
+                raise AppException(JOB_CONFIG_NOT_FOUND)
+
+            job_config = job_config_version.job_config
+            if not job_config:
+                raise AppException(JOB_CONFIG_NOT_FOUND)
+
+            intent_generation_input = IntentGenerationInput(
+                request_name=intent_job.request_name,
+                original_query=intent_job.original_query,
+                config=job_config_version.config,
+                config_name=job_config.name,
+                config_description=job_config.description,
+            )
+
+            logger.info("Store Intent Embeddings")
+            from app.search_worker.task import store_intent_embeddings
+
+            store_intent_embeddings.delay(
+                tenant_id=tenant_id,
+                intent_id=intent_job.id,
+                intent_request_name=intent_job.request_name,
+                intent_original_query=intent_job.original_query,
+            )
+
+            logger.info("Triggering Job Run")
+            from app.search_worker.task import generate_search_queries
+
+            generate_search_queries.delay(
+                str(job_run.id), asdict(intent_generation_input)
+            )
+
             self.intent_repo.db.commit()
             res_data = {
                 "id": intent_job.id,
@@ -67,11 +125,11 @@ class IntentService:
         data: UpdatedIntentJobConfigVersion,
     ) -> UpdatedIntentJobConfigVersionResponse:
         try:
-            job_config_version = self.job_config_repo.get_job_config_version(
-                job_config_version_id=data.job_config_version_id, tenant_id=tenant_id
-            )
-            if data.job_config_version_id and not job_config_version:
-                raise AppException(JOB_CONFIG_VERSION_NOT_FOUND)
+            if data.job_config_version_id:
+                job_config_version = self.job_config_service.get_job_config_version(
+                    job_config_version_id=data.job_config_version_id,
+                    tenant_id=tenant_id,
+                )
 
             intent_job = self.intent_repo.updated_config_version(
                 tenant_id=tenant_id,
@@ -116,4 +174,20 @@ class IntentService:
             }
             return success_response(res_data)
         except Exception:
+            raise
+
+    def store_intent_embedding(
+        self, tenant_id: UUID, intent_id: UUID, intent_embedding: list[float]
+    ):
+        try:
+            intent_job = self.intent_repo.get_intent(
+                intent_job_id=intent_id, tenant_id=tenant_id
+            )
+            if not intent_job:
+                raise AppException(INTENT_JOB_NOT_FOUND)
+            intent_job.intent_embedding = intent_embedding
+            self.intent_repo.db.flush()
+            self.intent_repo.db.commit()
+        except Exception:
+            self.intent_repo.db.rollback()
             raise

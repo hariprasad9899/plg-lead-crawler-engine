@@ -12,8 +12,6 @@ from app.core.exceptions.error_catalog import (
 
 
 class CreateJobConfigRequest(BaseModel):
-    tenant_id: UUID
-    created_by: UUID
     name: str
     description: str
     config: dict[str, Any]

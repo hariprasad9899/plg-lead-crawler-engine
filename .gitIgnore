@@ -3,6 +3,8 @@
 venv/
 .venv/
 
+.log
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -18,3 +20,7 @@ dist/
 
 # macOS
 .DS_Store
+
+# Logs
+*.log
+logs/
