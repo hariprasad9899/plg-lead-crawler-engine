@@ -1,0 +1,113 @@
+# Config 1
+
+{
+"name": "B2B SaaS Founder Discovery",
+"description": "Discover founders and decision makers in SaaS companies",
+"config": {
+"source": "website",
+"account_filters": {
+  "industries": [
+    "SaaS",
+    "B2B Software"
+  ],
+  "company_size": [
+    "11-50",
+    "51-200",
+    "201-1000"
+  ],
+  "locations": [
+    "United States",
+    "United Kingdom"
+  ]
+},
+"contact_filters": {
+  "titles": [
+    "Founder",
+    "Co-Founder",
+    "CEO",
+    "Owner",
+    "Managing Director"
+  ],
+  "seniority": [
+    "owner",
+    "founder",
+    "c_level"
+  ]
+},
+"signal_detection": {
+  "keywords": [
+    "founder",
+    "co-founder",
+    "leadership team",
+    "executive team"
+  ],
+  "embedding_enabled": true
+},
+"enrichment": {
+  "email": true,
+  "verify_email": true,
+  "linkedin_profile": true
+}
+}
+}
+
+# Intent1
+
+{
+"request_name": "Find SaaS founders in Texas",
+"original_query": "Find founders of SaaS companies in Texas with 50-500 employees",
+"schedule_expression": "0 2 * * *",
+"job_config_id": "b2b-saas-founder-discovery"
+}
+
+# Config 2
+
+{
+"name": "Hiring Signal Detection",
+"description": "Identify companies actively hiring for revenue and CRM related roles",
+"config": {
+"source": "website",
+"account_filters": {
+  "industries": [
+    "SaaS",
+    "FinTech",
+    "Healthcare Technology"
+  ],
+  "company_size": [
+    "51-200",
+    "201-1000",
+    "1001-5000"
+  ]
+},
+"signal_detection": {
+  "keywords": [
+    "salesforce",
+    "hubspot",
+    "crm",
+    "revenue operations",
+    "sales operations",
+    "customer success",
+    "account executive",
+    "business development"
+  ],
+  "embedding_enabled": true,
+  "page_similarity_threshold": 0.85
+},
+"enrichment": {
+  "email": true,
+  "verify_email": true,
+  "company_revenue": true,
+  "growth_rate": true
+}
+}
+}
+
+# Intent 2
+
+{
+  "request_name": "Find companies investing in Salesforce",
+  "original_query": "Find SaaS companies actively hiring Salesforce and Revenue Operations talent in North America",
+  "schedule_expression": "0 */12 * * *",
+  "job_config_id": "hiring-signal-detection"
+}
+

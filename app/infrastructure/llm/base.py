@@ -32,3 +32,8 @@ class BaseLLMProvider(ABC):
         produces an instance of ``schema`` validated by the vendor.
         """
         ...
+
+    @abstractmethod
+    def get_embedding(self, text: str) -> list[float]:
+        """Get embedding vector for the given text using OpenAI API."""
+        ...

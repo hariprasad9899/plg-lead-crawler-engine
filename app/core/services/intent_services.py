@@ -16,7 +16,6 @@ from app.core.utils.crontier import compute_timestamp_from_cron
 from uuid import UUID
 from app.core.utils.response import success_response
 from app.core.ai.intent.intent_normalizer import IntentNormalizer
-from app.search_worker.task import generate_search_queries
 from app.core.logger import get_logger
 from app.core.exceptions.error_catalog import JOB_CONFIG_NOT_FOUND
 from dataclasses import asdict
@@ -84,8 +83,23 @@ class IntentService:
                 config_name=job_config.name,
                 config_description=job_config.description,
             )
+
+            logger.info("Store Intent Embeddings")
+            from app.search_worker.task import store_intent_embeddings
+
+            store_intent_embeddings.delay(
+                tenant_id=tenant_id,
+                intent_id=intent_job.id,
+                intent_request_name=intent_job.request_name,
+                intent_original_query=intent_job.original_query,
+            )
+
             logger.info("Triggering Job Run")
-            generate_search_queries.delay(str(job_run.id), asdict(intent_generation_input))
+            from app.search_worker.task import generate_search_queries
+
+            generate_search_queries.delay(
+                str(job_run.id), asdict(intent_generation_input)
+            )
 
             self.intent_repo.db.commit()
             res_data = {
@@ -160,4 +174,20 @@ class IntentService:
             }
             return success_response(res_data)
         except Exception:
+            raise
+
+    def store_intent_embedding(
+        self, tenant_id: UUID, intent_id: UUID, intent_embedding: list[float]
+    ):
+        try:
+            intent_job = self.intent_repo.get_intent(
+                intent_job_id=intent_id, tenant_id=tenant_id
+            )
+            if not intent_job:
+                raise AppException(INTENT_JOB_NOT_FOUND)
+            intent_job.intent_embedding = intent_embedding
+            self.intent_repo.db.flush()
+            self.intent_repo.db.commit()
+        except Exception:
+            self.intent_repo.db.rollback()
             raise

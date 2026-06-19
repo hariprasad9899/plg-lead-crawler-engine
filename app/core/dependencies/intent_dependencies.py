@@ -15,4 +15,28 @@ def get_intent_service(db=Depends(get_db)):
     job_config_service = JobConfigService(repo=job_config_repo)
     job_run_service = JobRunService(job_run_repo=job_run_repo)
 
-    return IntentService(intent_repo=intent_repo, job_config_service=job_config_service, job_run_service=job_run_service)
+    return IntentService(
+        intent_repo=intent_repo,
+        job_config_service=job_config_service,
+        job_run_service=job_run_service,
+    )
+
+
+def get_intent_service_for_celery():
+    """For use in Celery tasks where FastAPI dependency injection isn't available."""
+    from app.infrastructure.database.sessions.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        intent_repo = IntentRepo(db=db)
+        job_config_repo = JobConfigRepo(db=db)
+        job_run_repo = JobRunRepo(db=db)
+        job_config_service = JobConfigService(repo=job_config_repo)
+        job_run_service = JobRunService(job_run_repo=job_run_repo)
+        return IntentService(
+            intent_repo=intent_repo,
+            job_config_service=job_config_service,
+            job_run_service=job_run_service,
+        )
+    finally:
+        db.close()
